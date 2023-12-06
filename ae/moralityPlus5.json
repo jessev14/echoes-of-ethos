@@ -1,0 +1,21 @@
+{
+    "icon": "icons/svg/aura.svg",
+    "name": "Morality +5",
+    "changes": [
+        {
+            "key": "system.skills.per.bonuses.check",
+            "mode": 2,
+            "value": "3"
+        },
+        {
+            "key": "system.skills.ins.bonuses.check",
+            "mode": 2,
+            "value": "2"
+        },
+        {
+            "key": "system.skills.dec.bonuses.check",
+            "mode": 2,
+            "value": "-2"
+        }
+    ]
+}

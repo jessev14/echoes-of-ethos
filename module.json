@@ -1,0 +1,36 @@
+{
+    "id": "echoes-of-ethos",
+    "title": "Echoes of Ethos",
+    "description": "",
+    "authors": [
+        {
+            "name": "enso",
+            "discord": "enso#0361"
+        }
+    ],
+    "version": "1.0.0",
+    "compatibility": {
+        "minimum": "11",
+        "verified": "11"
+    },
+    "esmodules": [
+        "./scripts/echoes-of-ethos.js"
+    ],
+    "styles": [
+    ],
+    "packs": [
+        {
+            "name": "echoes-of-ethos",
+            "label": "Echoes of Ethos",
+            "path": "./packs/visible-morality/",
+            "type": "RollTable"
+        }
+    ],
+    "languages": [],
+    "relationships": {
+    },
+    "flags": {},
+    "url": "",
+    "manifest": "",
+    "download": ""
+}

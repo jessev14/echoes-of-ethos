@@ -1,0 +1,16 @@
+<form autocomplete="off">
+    <div class="flexrow header">
+        <div><b>Threshold</b></div>
+        <div><b>Points</b></div>
+    </div>
+
+    {{#each thresholds as |threshold id|}}
+    <div class="flexrow">
+        <div>{{id}}</div>
+        <input type="number" name="threshold-{{id}}" value="{{threshold}}" />
+    </div>
+    {{/each}}
+
+    <button class="reset" type="button"><i class="fas fa-undo"></i>Reset to Default</button>
+    <button class="save" type="submit"><i class="fas fa-save"></i>Save</button>
+</form>

@@ -1,0 +1,11 @@
+{
+    "icon": "icons/svg/aura.svg",
+    "name": "Morality -1",
+    "changes": [
+        {
+            "key": "system.skills.itm.bonuses.check",
+            "mode": 2,
+            "value": "1"
+        }
+    ]
+}
