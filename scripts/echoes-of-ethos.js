@@ -94,6 +94,8 @@ Hooks.on('renderActorSheet', (app, [html], appData) => {
         case 'defaultNPC': {
             const alignmentLi = html.querySelector('li.alignment');
             const alignmentInput = alignmentLi.querySelector('input');
+            const alignmentValue = alignmentLi.querySelector('input').value;
+            if (Number.isInteger(alignmentValue)) actor.setFlag(module, 'morality', Number(alignmentValue));
             alignmentInput.remove();
 
             const moralityInput = document.createElement('span');
@@ -399,3 +401,9 @@ class VisibleMoralityConfig extends MoralityConfig {
     }
 
 }
+
+
+/** TO-DO
+ * If a number exists in the alignment property, use that as the starting morality value.
+ * 
+ */
