@@ -11,9 +11,10 @@ const vmTableIDs = {
     Minus3: '9nQgL4WR2OelAE6A'
 };
 const actorSheetMap = {
-    'systems/dnd5e/templates/actors/character-sheet.hbs': 'defaultCharacter',
+    'systems/dnd5e/templates/actors/character-sheet.hbs': 'legacy',
     'modules/compact-beyond-5e-sheet/templates/character-sheet.hbs': 'compactBeyond',
-    'systems/dnd5e/templates/actors/npc-sheet.hbs': 'defaultNPC'
+    'systems/dnd5e/templates/actors/npc-sheet.hbs': 'defaultNPC',
+    'systems/dnd5e/templates/actors/character-sheet-2.hbs': 'defaultCharacter'
 };
 let maxThreshold;
 
@@ -90,12 +91,10 @@ Hooks.on('renderActorSheet', (app, [html], appData) => {
     const { actor } = app;
 
     switch (sheetType) {
-        case 'defaultCharacter':
+        case 'legacy':
         case 'defaultNPC': {
             const alignmentLi = html.querySelector('li.alignment');
             const alignmentInput = alignmentLi.querySelector('input');
-            const alignmentValue = alignmentLi.querySelector('input').value;
-            if (Number.isInteger(alignmentValue)) actor.setFlag(module, 'morality', Number(alignmentValue));
             alignmentInput.remove();
 
             const moralityInput = document.createElement('span');
@@ -115,10 +114,26 @@ Hooks.on('renderActorSheet', (app, [html], appData) => {
             alignmentInput.value = `${actor.getFlag(moduleID, 'morality') ?? 0}`;
             break;
         }
+        case 'defaultCharacter': {
+            const alignmentLi = html.querySelector('ul.unlist.characteristics').querySelector('li');
+            alignmentLi.querySelector('span.label').innerText = 'Morality';
+            const isPlayMode = alignmentLi.closest('form').classList.contains('interactable');
+
+            if (isPlayMode) alignmentLi.querySelector('span.value').innerText = actor.getFlag(moduleID, 'morality') ?? 0;
+            else {
+                html.querySelector('input[name="system.details.alignment"]').remove();
+
+                const moralityInput = document.createElement('input');
+                moralityInput.type = 'number';
+                moralityInput.name = `flags.${moduleID}.morality`;
+                moralityInput.value = actor.getFlag(moduleID, 'morality') ?? 0;
+                alignmentLi.appendChild(moralityInput);
+            }
+        }
     }
 
     if (!game.settings.get(moduleID, 'vmEnabled')) return;
-    
+
     const vmFlags = [];
     for (const vmLevel of [1, 2, 3]) {
         const flagData = actor.getFlag(moduleID, `vm${vmLevel}`);
@@ -127,26 +142,26 @@ Hooks.on('renderActorSheet', (app, [html], appData) => {
     if (!vmFlags.length) return;
 
     switch (sheetType) {
-        case 'defaultCharacter':
+        case 'legacy': {
             const appearanceTextarea = html.querySelector('textarea[name="system.details.appearance"]');
             appearanceTextarea.disabled = true;
             appearanceTextarea.dataset.tooltip = "This value is being modified by Visible Morality and cannot be edited. Temporarily disable Visible Morality to edit.";
-    
+
             for (const vm of vmFlags) {
                 appearanceTextarea.value += `\n\n${vm}`;
             }
             break;
-
-        case 'defaultNPC':
+        }
+        case 'defaultNPC': {
             const biography = html.querySelector('div[data-edit="system.details.biography.value"]');
             for (const vm of vmFlags) {
                 const v = document.createElement('p');
                 v.innerText = vm;
                 biography.appendChild(v);
-            }    
+            }
             break;
-
-        case 'compactBeyond':
+        }
+        case 'compactBeyond': {
             const appearanceDiv = html.querySelector('div[data-edit="system.details.appearance"]');
             for (const vm of vmFlags) {
                 const v = document.createElement('p');
@@ -154,6 +169,27 @@ Hooks.on('renderActorSheet', (app, [html], appData) => {
                 appearanceDiv.appendChild(v);
             }
             break;
+        }
+        case 'defaultCharacter': {
+            const appearanceTextarea = html.querySelector('textarea[name="system.details.appearance"]');
+            if (appearanceTextarea) {
+                appearanceTextarea.disabled = true;
+                appearanceTextarea.dataset.tooltip = "This value is being modified by Visible Morality and cannot be edited. Temporarily disable Visible Morality to edit.";
+
+                for (const vm of vmFlags) {
+                    appearanceTextarea.value += `\n\n${vm}`;
+                }
+            } else {
+                const appearanceIcon = html.querySelector('i.fas.fa-image-portrait');
+                const textbox = appearanceIcon.closest('div.textbox-half');
+                const p = textbox.querySelector('p');
+                for (const vm of vmFlags) {
+                    p.innerText += `\n\n${vm}`;
+                }
+
+            }
+            break;
+        }
     }
 });
 
@@ -167,7 +203,7 @@ Hooks.on('updateActor', async (actor, diff, options, userID) => {
     if (
         (oldMoralityLevel === moralityLevel)
         && (oldVMLevel === vmLevel)
-        ) return;
+    ) return;
 
     await actor.setFlag(moduleID, 'moralityLevel', moralityLevel);
     await actor.setFlag(moduleID, 'vmLevel', vmLevel);
@@ -184,7 +220,7 @@ Hooks.on('updateActor', async (actor, diff, options, userID) => {
 
 Hooks.on('dnd5e.preRollSkill', (actor, options, skl) => {
     const moralityLevel = actor.getFlag(moduleID, 'moralityLevel');
-    if (Math.abs(moralityLevel) !== 7 ) return;
+    if (Math.abs(moralityLevel) !== 7) return;
 
     const advSkills = moralityLevel > 0 ? ['per', 'ins'] : ['dec', 'int'];
     const disadvSkills = moralityLevel > 0 ? ['dec'] : ['per'];
@@ -262,7 +298,7 @@ async function updateVM(actor, oldVMLevel) {
         for (const vmLevel of [1, 2, 3]) {
             const flagData = actor.getFlag(moduleID, `vm${vmLevel}`);
             if (!flagData) continue;
-    
+
             await actor.unsetFlag(moduleID, `vm${vmLevel}`);
         }
     }
@@ -288,7 +324,7 @@ async function updateVM(actor, oldVMLevel) {
             callback: async () => {
                 rollTableResult = (await rollTable.draw()).results[0].text;
             }
-        };    
+        };
         await Dialog.wait({
             title: `Visible Morality - ${rollTable.name}`,
             content: `
@@ -347,7 +383,7 @@ class MoralityConfig extends FormApplication {
             let cancel = false;
             await Dialog.confirm({
                 content: 'Reset to Default?',
-                yes: () => {},
+                yes: () => { },
                 no: () => cancel = true,
                 defaultYes: false
             })
@@ -377,7 +413,7 @@ class MoralityConfig extends FormApplication {
         fd.forEach((v, index) => {
             data[index + 1] = v;
         });
-        
+
         if (this.type === 'moralityThresholds') {
             const level7Enabled = game.settings.get(moduleID, 'level7Enabled');
             maxThreshold = data[level7Enabled ? 7 : 6];
