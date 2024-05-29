@@ -16,8 +16,7 @@
     "esmodules": [
         "./scripts/echoes-of-ethos.js"
     ],
-    "styles": [
-    ],
+    "styles": [],
     "packs": [
         {
             "name": "echoes-of-ethos",
@@ -28,6 +27,26 @@
     ],
     "languages": [],
     "relationships": {
+        "systems": [
+            {
+                "id": "dnd5e",
+                "type": "system",
+                "compatibility": {
+                    "minimum": "3.0.0",
+                    "verified": "3.0.0"
+                }
+            }
+        ],
+        "requires": [
+            {
+                "id": "lib-wrapper",
+                "type": "module",
+                "compatibility": {
+                    "minimum": "1",
+                    "verified": "1.12.7.1"
+                }
+            }
+        ]
     },
     "flags": {},
     "url": "",

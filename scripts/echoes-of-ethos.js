@@ -230,6 +230,35 @@ Hooks.on('dnd5e.preRollSkill', (actor, options, skl) => {
     return ui.notifications.info(`Morality ${moralityLevel > 0 ? '+' : '-'}${Math.abs(moralityLevel)} | Roll with ${advSkills.includes(skl) ? 'Advantage' : 'Disadvantage'} `);
 });
 
+Hooks.on('renderTidy5eNpcSheet', (app, [html], appData) => {
+    const moralityLabel = html.querySelector('span.origin-summary-text');
+    moralityLabel.innerText = `Morality: ${moralityLabel.innerText}`;
+});
+
+Hooks.on('renderActorOriginSummaryConfigFormApplication', (app, [html], appData) => {
+    const input = html.querySelector('input[id^="alignment"]');
+    input.type = 'number';
+    const div = input.closest('div');
+    const label = div.querySelector('label');
+    label.innerText = "Morality";
+
+    // const { actor } = app;
+    // const og_updateObject = app._updateObject;
+    // app._updateObject = async function () {
+    //     await actor.setFlag(moduleID, 'morality', Number(input.value));
+    //     await og_updateObject.call(app);
+    // };
+});
+
+Hooks.on('updateActor', async (actor, diff, options, userID) => {
+    if (actor.type !== 'npc') return;
+    if (game.user.id !== userID) return;
+    if (!('alignment' in (diff.system?.details ?? {}))) return;
+    
+    const morality = Number(diff.system.details.alignment);
+    return actor.setFlag(moduleID, 'morality', morality);
+});
+
 
 function getMoralityLevels(morality) {
     if (!morality) return [0, 0];
