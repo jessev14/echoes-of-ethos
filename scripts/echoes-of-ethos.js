@@ -437,9 +437,3 @@ class VisibleMoralityConfig extends MoralityConfig {
     }
 
 }
-
-
-/** TO-DO
- * If a number exists in the alignment property, use that as the starting morality value.
- * 
- */
