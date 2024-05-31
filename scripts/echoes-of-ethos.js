@@ -14,7 +14,8 @@ const actorSheetMap = {
     'systems/dnd5e/templates/actors/character-sheet.hbs': 'legacy',
     'modules/compact-beyond-5e-sheet/templates/character-sheet.hbs': 'compactBeyond',
     'systems/dnd5e/templates/actors/npc-sheet.hbs': 'defaultNPC',
-    'systems/dnd5e/templates/actors/character-sheet-2.hbs': 'defaultCharacter'
+    'systems/dnd5e/templates/actors/character-sheet-2.hbs': 'defaultCharacter',
+    'modules/tidy5e-sheet/templates/empty-form-template.hbs': 'tidy5eNPC'
 };
 let maxThreshold;
 
@@ -78,8 +79,6 @@ Hooks.once('init', () => {
         type: VisibleMoralityConfig,
         restricted: true
     });
-
-    libWrapper.register(moduleID, 'Actor.prototype.prepareData', prepareNPCmorality, 'WRAPPER');
 });
 
 Hooks.once('ready', () => {
@@ -192,6 +191,16 @@ Hooks.on('renderActorSheet', (app, [html], appData) => {
             }
             break;
         }
+        case 'tidy5eNPC': {
+            const appearance = html.querySelector('article.appearance-notes').querySelector('div[data-edit="flags.tidy5e-sheet.appearance"]');
+            // need to disable editor
+            for (const vm of vmFlags) {
+                const v = document.createElement('p');
+                v.innerText = vm;
+                appearance.appendChild(v);
+            }
+            break;
+        }
     }
 });
 
@@ -233,23 +242,19 @@ Hooks.on('dnd5e.preRollSkill', (actor, options, skl) => {
 });
 
 Hooks.on('renderTidy5eNpcSheet', (app, [html], appData) => {
+    const { actor } = app;
+    const morality = actor.getFlag(moduleID, 'morality');
     const moralityLabel = html.querySelector('span.origin-summary-text');
-    moralityLabel.innerText = `Morality: ${moralityLabel.innerText}`;
+    moralityLabel.innerText = `Morality: ${morality}`;
 });
 
 Hooks.on('renderActorOriginSummaryConfigFormApplication', (app, [html], appData) => {
     const input = html.querySelector('input[id^="alignment"]');
     input.type = 'number';
+    input.value = app.actor.getFlag(moduleID, 'morality');
     const div = input.closest('div');
     const label = div.querySelector('label');
     label.innerText = "Morality";
-
-    // const { actor } = app;
-    // const og_updateObject = app._updateObject;
-    // app._updateObject = async function () {
-    //     await actor.setFlag(moduleID, 'morality', Number(input.value));
-    //     await og_updateObject.call(app);
-    // };
 });
 
 Hooks.on('updateActor', async (actor, diff, options, userID) => {
@@ -268,6 +273,26 @@ Hooks.on('createToken', (token, context, userID) => {
     return updateVM(actor, 0, true);
 });
 
+Hooks.on('preCreateActor', (actor, documentData, options, userID) => {
+    if (actor.type !== 'npc') return;
+
+    const alignment = actor.system.details.alignment;
+    if (!alignment) return;
+    if (Number.isNumeric(alignment)) return;
+
+    let scale, sign;
+    if (alignment.includes('Good') || alignment.includes('Evil')) {
+        scale = 50;
+        sign = alignment.includes('Good') ? 1 : -1;
+    } else {
+        scale = 2.45;
+        sign = Math.round(Math.random()) ? 1 : -1;
+    }
+    const morality = Math.trunc(sign * actor.system.details.cr * scale);
+    return actor.updateSource({
+        [`flags.${moduleID}.morality`]: morality
+    });
+});
 
 function getMoralityLevels(morality) {
     if (!morality) return [0, 0];
@@ -385,14 +410,6 @@ async function updateVM(actor, oldVMLevel, autoRoll = false) {
 
         if (rollTableResult) return actor.setFlag(moduleID, `vm${Math.abs(vmLevel)}`, rollTableResult);
     }
-}
-
-
-function prepareNPCmorality(wrapped) {
-    wrapped();
-
-    if (this.type !== 'npc') return;
-    if (this.flags?.[moduleID]) return;
 }
 
 

@@ -1,9 +1,7 @@
-2024/05/30-20:57:03.511 536c Log #45: 0 ops saved to Table #111 OK
-2024/05/30-20:57:03.513 536c Archiving C:\Users\Jesse\Documents\fvtt-dev\data\Data\modules\echoes-of-ethos\packs\visible-morality/000045.log: OK
-2024/05/30-20:57:03.513 536c Log #110: 0 ops saved to Table #112 OK
-2024/05/30-20:57:03.515 536c Archiving C:\Users\Jesse\Documents\fvtt-dev\data\Data\modules\echoes-of-ethos\packs\visible-morality/000110.log: OK
-2024/05/30-20:57:03.515 536c Table #35: 30 entries OK
-2024/05/30-20:57:03.515 536c Table #104: 30 entries OK
-2024/05/30-20:57:03.522 536c Archiving C:\Users\Jesse\Documents\fvtt-dev\data\Data\modules\echoes-of-ethos\packs\visible-morality/MANIFEST-000044: OK
-2024/05/30-20:57:03.524 536c Archiving C:\Users\Jesse\Documents\fvtt-dev\data\Data\modules\echoes-of-ethos\packs\visible-morality/MANIFEST-000109: OK
-2024/05/30-20:57:03.531 536c **** Repaired leveldb C:\Users\Jesse\Documents\fvtt-dev\data\Data\modules\echoes-of-ethos\packs\visible-morality; recovered 2 files; 8730 bytes. Some data may have been lost. ****
+2024/05/30-21:05:35.072 536c Recovering log #115
+2024/05/30-21:05:35.081 536c Delete type=0 #115
+2024/05/30-21:05:35.082 536c Delete type=3 #113
+2024/05/30-21:06:07.266 50e4 Level-0 table #121: started
+2024/05/30-21:06:07.266 50e4 Level-0 table #121: 0 bytes OK
+2024/05/30-21:06:07.267 50e4 Delete type=0 #119
+2024/05/30-21:06:07.270 50e4 Manual compaction at level-0 from '!tables!1SIMlIkutyNCep9m' @ 72057594037927935 : 1 .. '!tables.results!rcqybsg8XXFapR9I.NamnVdUzkkq1Omv9' @ 0 : 0; will stop at (end)
