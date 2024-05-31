@@ -78,6 +78,8 @@ Hooks.once('init', () => {
         type: VisibleMoralityConfig,
         restricted: true
     });
+
+    libWrapper.register(moduleID, 'Actor.prototype.prepareData', prepareNPCmorality, 'WRAPPER');
 });
 
 Hooks.once('ready', () => {
@@ -254,9 +256,16 @@ Hooks.on('updateActor', async (actor, diff, options, userID) => {
     if (actor.type !== 'npc') return;
     if (game.user.id !== userID) return;
     if (!('alignment' in (diff.system?.details ?? {}))) return;
-    
+
     const morality = Number(diff.system.details.alignment);
     return actor.setFlag(moduleID, 'morality', morality);
+});
+
+Hooks.on('createToken', (token, context, userID) => {
+    const { actor } = token;
+    if (actor.type !== 'npc') return;
+
+    return updateVM(actor, 0, true);
 });
 
 
@@ -302,8 +311,9 @@ async function createMoralityAE(moralityLevel, uuid) {
     return moralityAE;
 }
 
-async function updateVM(actor, oldVMLevel) {
+async function updateVM(actor, oldVMLevel, autoRoll = false) {
     if (!game.settings.get(moduleID, 'vmEnabled')) return removeVMFlags(actor);
+    if (actor.type === 'npc' && !actor.isToken) return removeVMFlags(actor);
 
     const vmLevel = actor.getFlag(moduleID, 'vmLevel');
     if (!vmLevel) return removeVMFlags(actor);
@@ -311,7 +321,7 @@ async function updateVM(actor, oldVMLevel) {
     if (Math.sign(vmLevel) !== Math.sign(oldVMLevel)) {
         await removeVMFlags(actor);
         for (let level = 1; level < Math.abs(vmLevel) + 1; level++) {
-            await promptVM(actor, level * Math.sign(vmLevel));
+            await promptVM(actor, level * Math.sign(vmLevel), autoRoll);
         }
     } else if (Math.abs(vmLevel) < Math.abs(oldVMLevel)) {
         for (let level = Math.abs(oldVMLevel); level > Math.abs(vmLevel); level--) {
@@ -319,7 +329,7 @@ async function updateVM(actor, oldVMLevel) {
         }
     } else {
         for (let level = Math.abs(oldVMLevel) + 1; level < Math.abs(vmLevel) + 1; level++) {
-            await promptVM(actor, level * Math.sign(vmLevel));
+            await promptVM(actor, level * Math.sign(vmLevel), autoRoll);
         }
     }
 
@@ -332,7 +342,7 @@ async function updateVM(actor, oldVMLevel) {
         }
     }
 
-    async function promptVM(actor, vmLevel) {
+    async function promptVM(actor, vmLevel, autoRoll = false) {
         const user = game.users.find(u => u.character?.id === actor.id) || game.users.find(u => u.isGM && u.active);
         if (!user) return;
 
@@ -340,6 +350,11 @@ async function updateVM(actor, oldVMLevel) {
         const rollTable = game.tables.find(t => t.getFlag(moduleID, 'vmLevel') === flagValue) || await game.packs.get(`${moduleID}.${moduleID}`).getDocument(vmTableIDs[flagValue]);
 
         let rollTableResult;
+        if (autoRoll) {
+            rollTableResult = (await rollTable.draw({ displayChat: false })).results[0].text;
+            return actor.setFlag(moduleID, `vm${Math.abs(vmLevel)}`, rollTableResult);
+        }
+
         const buttons = {
         };
         for (const tableResult of rollTable.results.contents) {
@@ -370,6 +385,14 @@ async function updateVM(actor, oldVMLevel) {
 
         if (rollTableResult) return actor.setFlag(moduleID, `vm${Math.abs(vmLevel)}`, rollTableResult);
     }
+}
+
+
+function prepareNPCmorality(wrapped) {
+    wrapped();
+
+    if (this.type !== 'npc') return;
+    if (this.flags?.[moduleID]) return;
 }
 
 
