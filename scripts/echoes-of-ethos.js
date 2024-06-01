@@ -192,42 +192,22 @@ Hooks.on('renderActorSheet', (app, [html], appData) => {
             break;
         }
         case 'tidy5eNPC': {
-            const appearance = html.querySelector('article.appearance-notes').querySelector('div[data-edit="flags.tidy5e-sheet.appearance"]');
-            // need to disable editor
+            const apperanceNotes = html.querySelector('article.appearance-notes');
+            apperanceNotes.querySelector('a.editor-edit').style.display = 'none';
+
+            const appearance = apperanceNotes.querySelector('div[data-edit="flags.tidy5e-sheet.appearance"]');
             for (const vm of vmFlags) {
                 const v = document.createElement('p');
                 v.innerText = vm;
                 appearance.appendChild(v);
             }
+            appearance.title = "This value is being modified by Visible Morality and cannot be edited. Temporarily disable Visible Morality to edit.";
             break;
         }
     }
 });
 
-Hooks.on('updateActor', async (actor, diff, options, userID) => {
-    if (game.user.id !== userID) return;
-    if (!('morality' in (diff.flags?.[moduleID] ?? {}))) return;
-
-    const oldMoralityLevel = actor.getFlag(moduleID, 'moralityLevel') ?? 0;
-    const oldVMLevel = actor.getFlag(moduleID, 'vmLevel') ?? 0;
-    const [moralityLevel, vmLevel] = getMoralityLevels(diff.flags[moduleID].morality);
-    if (
-        (oldMoralityLevel === moralityLevel)
-        && (oldVMLevel === vmLevel)
-    ) return;
-
-    await actor.setFlag(moduleID, 'moralityLevel', moralityLevel);
-    await actor.setFlag(moduleID, 'vmLevel', vmLevel);
-
-    const toDelete = [];
-    for (const effect of actor.effects) {
-        if (effect.getFlag(moduleID, 'isEoE')) toDelete.push(effect.id);
-    }
-    await actor.deleteEmbeddedDocuments('ActiveEffect', toDelete);
-
-    if (moralityLevel) await actor.createEmbeddedDocuments('ActiveEffect', [await createMoralityAE(moralityLevel, actor.uuid)]);
-    if (oldVMLevel !== vmLevel) return updateVM(actor, oldVMLevel);
-});
+Hooks.on('updateActor', updateMorality);
 
 Hooks.on('dnd5e.preRollSkill', (actor, options, skl) => {
     const moralityLevel = actor.getFlag(moduleID, 'moralityLevel');
@@ -243,7 +223,7 @@ Hooks.on('dnd5e.preRollSkill', (actor, options, skl) => {
 
 Hooks.on('renderTidy5eNpcSheet', (app, [html], appData) => {
     const { actor } = app;
-    const morality = actor.getFlag(moduleID, 'morality');
+    const morality = actor.getFlag(moduleID, 'morality') ?? '0';
     const moralityLabel = html.querySelector('span.origin-summary-text');
     moralityLabel.innerText = `Morality: ${morality}`;
 });
@@ -273,7 +253,8 @@ Hooks.on('createToken', (token, context, userID) => {
     return updateVM(actor, 0, true);
 });
 
-Hooks.on('preCreateActor', (actor, documentData, options, userID) => {
+Hooks.on('createActor', (actor, options, userID) => {
+    if (game.user.id !== userID) return;
     if (actor.type !== 'npc') return;
 
     const alignment = actor.system.details.alignment;
@@ -289,10 +270,36 @@ Hooks.on('preCreateActor', (actor, documentData, options, userID) => {
         sign = Math.round(Math.random()) ? 1 : -1;
     }
     const morality = Math.trunc(sign * actor.system.details.cr * scale);
-    return actor.updateSource({
+    return actor.update({
         [`flags.${moduleID}.morality`]: morality
     });
 });
+
+
+async function updateMorality(actor, diff, options, userID) {
+    if (game.user.id !== userID) return;
+    if (!('morality' in (diff.flags?.[moduleID] ?? {}))) return;
+
+    const oldMoralityLevel = actor.getFlag(moduleID, 'moralityLevel') ?? 0;
+    const oldVMLevel = actor.getFlag(moduleID, 'vmLevel') ?? 0;
+    const [moralityLevel, vmLevel] = getMoralityLevels(diff.flags[moduleID].morality);
+    if (
+        (oldMoralityLevel === moralityLevel)
+        && (oldVMLevel === vmLevel)
+    ) return;
+
+    await actor.setFlag(moduleID, 'moralityLevel', moralityLevel);
+    await actor.setFlag(moduleID, 'vmLevel', vmLevel);
+
+    const toDelete = [];
+    for (const effect of actor.effects) {
+        if (effect.getFlag(moduleID, 'isEoE')) toDelete.push(effect.id);
+    }
+    await actor.deleteEmbeddedDocuments('ActiveEffect', toDelete);
+
+    if (moralityLevel) await actor.createEmbeddedDocuments('ActiveEffect', [await createMoralityAE(moralityLevel, actor.uuid)]);
+    if (oldVMLevel !== vmLevel) return updateVM(actor, oldVMLevel);
+}
 
 function getMoralityLevels(morality) {
     if (!morality) return [0, 0];
