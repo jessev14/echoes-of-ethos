@@ -79,6 +79,8 @@ Hooks.once('init', () => {
         type: VisibleMoralityConfig,
         restricted: true
     });
+
+    libWrapper.register(moduleID, 'Actor.prototype.prepareData', npcPrepareData, 'WRAPPER');
 });
 
 Hooks.once('ready', () => {
@@ -254,6 +256,7 @@ Hooks.on('createToken', (token, context, userID) => {
 });
 
 Hooks.on('createActor', (actor, options, userID) => {
+    return;
     if (game.user.id !== userID) return;
     if (actor.type !== 'npc') return;
 
@@ -279,6 +282,7 @@ Hooks.on('createActor', (actor, options, userID) => {
 async function updateMorality(actor, diff, options, userID) {
     if (game.user.id !== userID) return;
     if (!('morality' in (diff.flags?.[moduleID] ?? {}))) return;
+    lg('here')
 
     const oldMoralityLevel = actor.getFlag(moduleID, 'moralityLevel') ?? 0;
     const oldVMLevel = actor.getFlag(moduleID, 'vmLevel') ?? 0;
@@ -417,6 +421,30 @@ async function updateVM(actor, oldVMLevel, autoRoll = false) {
 
         if (rollTableResult) return actor.setFlag(moduleID, `vm${Math.abs(vmLevel)}`, rollTableResult);
     }
+}
+
+function npcPrepareData(wrapped) {
+    wrapped();
+
+    const actor = this;
+    if (actor.type !== 'npc') return;
+    if (actor.pack) return;
+    if (Number.isNumeric(actor.getFlag(moduleID, 'morality'))) return;
+
+    const alignment = actor.system.details.alignment;
+    if (!alignment || Number.isNumeric(alignment)) return;
+
+    let scale, sign;
+    if (alignment.includes('Good') || alignment.includes('Evil')) {
+        scale = 50;
+        sign = alignment.includes('Good') ? 1 : -1;
+    } else {
+        scale = 2.45;
+        sign = Math.round(Math.random()) ? 1 : -1;
+    }
+    const morality = Math.trunc(sign * actor.system.details.cr * scale);
+
+    return actor.update({ [`flags.${moduleID}.morality`]: morality });
 }
 
 
