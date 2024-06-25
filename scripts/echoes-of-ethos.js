@@ -435,9 +435,9 @@ function npcPrepareData(wrapped) {
     if (!alignment || Number.isNumeric(alignment)) return;
 
     let scale, sign;
-    if (alignment.includes('Good') || alignment.includes('Evil')) {
+    if (alignment.toLowerCase().includes('good') || alignment.toLowerCase().includes('evil')) {
         scale = 50;
-        sign = alignment.includes('Good') ? 1 : -1;
+        sign = alignment.toLowerCase().includes('good') ? 1 : -1;
     } else {
         scale = 2.45;
         sign = Math.round(Math.random()) ? 1 : -1;
