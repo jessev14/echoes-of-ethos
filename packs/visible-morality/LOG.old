@@ -1,3 +1,5 @@
-2024/05/30-21:06:20.840 1ba4 Recovering log #120
-2024/05/30-21:06:20.849 1ba4 Delete type=0 #120
-2024/05/30-21:06:20.849 1ba4 Delete type=3 #118
+2024/09/08-13:31:48.768 4200 Log #175: 0 ops saved to Table #176 OK
+2024/09/08-13:31:48.770 4200 Archiving C:\Users\Jesse\Documents\fvtt-dev\data\Data\modules\echoes-of-ethos\packs\visible-morality/000175.log: OK
+2024/09/08-13:31:48.773 4200 Table #172: 30 entries OK
+2024/09/08-13:31:48.779 4200 Archiving C:\Users\Jesse\Documents\fvtt-dev\data\Data\modules\echoes-of-ethos\packs\visible-morality/MANIFEST-000173: OK
+2024/09/08-13:31:48.788 4200 **** Repaired leveldb C:\Users\Jesse\Documents\fvtt-dev\data\Data\modules\echoes-of-ethos\packs\visible-morality; recovered 1 files; 4408 bytes. Some data may have been lost. ****
