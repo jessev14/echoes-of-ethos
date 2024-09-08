@@ -13,7 +13,7 @@ const vmTableIDs = {
 const actorSheetMap = {
     'systems/dnd5e/templates/actors/character-sheet.hbs': 'legacy',
     'modules/compact-beyond-5e-sheet/templates/character-sheet.hbs': 'compactBeyond',
-    'systems/dnd5e/templates/actors/npc-sheet.hbs': 'defaultNPC',
+    'systems/dnd5e/templates/actors/npc-sheet-2.hbs': 'defaultNPC',
     'systems/dnd5e/templates/actors/character-sheet-2.hbs': 'defaultCharacter',
     'modules/tidy5e-sheet/templates/empty-form-template.hbs': 'tidy5eNPC'
 };
@@ -96,17 +96,18 @@ Hooks.on('renderActorSheet', (app, [html], appData) => {
     switch (sheetType) {
         case 'legacy':
         case 'defaultNPC': {
-            const alignmentLi = html.querySelector('li.alignment');
-            const alignmentInput = alignmentLi.querySelector('input');
-            alignmentInput.remove();
-
-            const moralityInput = document.createElement('span');
-            moralityInput.style.display = 'flex';
-            moralityInput.innerHTML = `
-                <span>Morality: </span>
-                <input type="number" name="flags.${moduleID}.morality" value="${actor.getFlag(moduleID, 'morality') ?? 0}" />
-            `;
-            alignmentLi.append(moralityInput);
+            const isPlayMode = app._mode === 1;
+            if (isPlayMode) {
+                const alignmentLi = html.querySelector('li.creature-alignment');
+                alignmentLi.innerHTML = `
+                    <span>Morality: ${actor.getFlag(moduleID, 'morality')}</span>
+                `;   
+            } else {
+                const alignmentLi = html.querySelector('li.creature-alignment');
+                alignmentLi.innerHTML = `
+                    <input type="number" name="flags.${moduleID}.morality" value="${actor.getFlag(moduleID, 'morality') ?? 0}" />
+                `;
+            }
             break;
         }
         case 'compactBeyond': {
@@ -156,11 +157,13 @@ Hooks.on('renderActorSheet', (app, [html], appData) => {
             break;
         }
         case 'defaultNPC': {
-            const biography = html.querySelector('div[data-edit="system.details.biography.value"]');
+            const biography = html.querySelector('div[data-target="system.details.biography.value"]');
+            const biographyContent = biography.querySelector('div.editor-content');
+            if (vmFlags.length) biographyContent.prepend(document.createElement('hr'));
             for (const vm of vmFlags) {
                 const v = document.createElement('p');
                 v.innerText = vm;
-                biography.appendChild(v);
+                biographyContent.prepend(v);
             }
             break;
         }
@@ -282,7 +285,6 @@ Hooks.on('createActor', (actor, options, userID) => {
 async function updateMorality(actor, diff, options, userID) {
     if (game.user.id !== userID) return;
     if (!('morality' in (diff.flags?.[moduleID] ?? {}))) return;
-    lg('here')
 
     const oldMoralityLevel = actor.getFlag(moduleID, 'moralityLevel') ?? 0;
     const oldVMLevel = actor.getFlag(moduleID, 'vmLevel') ?? 0;
