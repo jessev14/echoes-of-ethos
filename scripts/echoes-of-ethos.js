@@ -253,7 +253,7 @@ Hooks.on('updateActor', async (actor, diff, options, userID) => {
 
 Hooks.on('createToken', (token, context, userID) => {
     const { actor } = token;
-    if (actor.type !== 'npc') return;
+    if (actor.type !== 'npc' || !actor.isToken) return;
 
     return updateVM(actor, 0, true);
 });
@@ -351,7 +351,7 @@ async function createMoralityAE(moralityLevel, uuid) {
 
 async function updateVM(actor, oldVMLevel, autoRoll = false) {
     if (!game.settings.get(moduleID, 'vmEnabled')) return removeVMFlags(actor);
-    if (actor.type === 'npc' && !actor.isToken) return removeVMFlags(actor);
+    // if (actor.type === 'npc' && !actor.isToken) return removeVMFlags(actor);
 
     const vmLevel = actor.getFlag(moduleID, 'vmLevel');
     if (!vmLevel) return removeVMFlags(actor);
